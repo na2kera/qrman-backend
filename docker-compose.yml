@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+    # command: は各環境のDockerfileまたはオーバーライドファイルで定義
+    # ports: は各環境のオーバーライドファイルで定義
+    # volumes: は各環境のオーバーライドファイルで定義
+    # environment: は各環境のオーバーライドファイルまたは .env ファイルで定義
+    # depends_on: は環境に応じてオーバーライドファイルで定義
+    stdin_open: true # rails console などで入力待ち受けを可能にする
+    tty: true # rails console などでTTYを割り当てる
+
+  db:
+    image: postgres:15 # プロジェクトに合わせてバージョンを指定してください
+    # environment: は .env ファイルで定義推奨
+    # volumes: は各環境のオーバーライドファイルで定義
+    # ports: は開発時のみオーバーライドファイルで定義

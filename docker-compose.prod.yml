@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      dockerfile: Dockerfile # 本番用のDockerfileを使用
+      # args: # ビルド時引数があれば指定
+      #   RAILS_MASTER_KEY: ${RAILS_MASTER_KEY} # ビルド時にmaster keyが必要な場合。ただし、実行時の方が安全
+    # command: はDockerfileのCMDに任せるか、必要に応じて上書き
+    # 例: command: ["./bin/thrust", "./bin/rails", "server"] (Dockerfileと同じなら不要)
+    ports:
+      - "80:80" # またはリバースプロキシを使用する場合は公開しないか、適切なポートに
+    environment:
+      - RAILS_ENV=production
+      - RAILS_LOG_TO_STDOUT=true # コンテナログとして出力
+      - RAILS_SERVE_STATIC_FILES=true # 静的ファイルをRailsが配信する場合 (リバースプロキシが担当するなら不要)
+      - POSTGRES_HOST=db
+      # POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB は .env やシークレット管理ツールから
+      # RAILS_MASTER_KEY は .env やシークレット管理ツールから
+    env_file:
+      - .env # .envファイルから共通の環境変数を読み込む。シークレットは別途管理を推奨
+    # secrets: # Docker Swarm/Kubernetesのsecretsを使う場合
+    #   - rails_master_key
+    #   - postgres_password
+    depends_on:
+      - db
+
+  db:
+    # image: postgres:15 (ベースで定義済み)
+    volumes:
+      - production_postgres_data:/var/lib/postgresql/data # 本番用DBデータの永続化ボリューム
+    environment:
+      # POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB は .env やシークレット管理ツールから
+      # POSTGRES_HOST_AUTH_METHOD は設定せず、パスワード認証を強制
+    env_file:
+      - .env
+    # secrets:
+    #   - postgres_password
+
+volumes:
+  production_postgres_data:
+# secrets: # Docker secrets を使う場合はここで定義
+#   rails_master_key:
+#     file: ./secrets/rails_master_key.txt
+#   postgres_password:
+#     file: ./secrets/postgres_password.txt

@@ -1,0 +1,67 @@
+# syntax=docker/dockerfile:1
+
+# Make sure RUBY_VERSION matches the Ruby version in .ruby-version
+ARG RUBY_VERSION=3.3.5
+# ARG NODE_VERSION="18.17.1" # 必要に応じてコメント解除し、バージョンを指定
+
+FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
+
+# Rails app lives here
+WORKDIR /rails
+
+# Install base packages
+# RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION%.*}.x | bash - # Node.js を NodeSource からインストールする場合
+# nodejs yarn # 必要に応じて追加 (コメントをコマンドの前に移動)
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y curl libvips postgresql-client && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Set development environment
+ENV RAILS_ENV="development"
+ENV BUNDLE_PATH="/usr/local/bundle"
+# development グループの gem をインストール (コメントをENV命令の前に移動)
+ENV BUNDLE_WITHOUT="production"
+
+# Throw-away build stage to reduce size of final image (開発用では不要な場合もあるが、gemインストールのため維持)
+FROM base AS build
+
+# Install packages needed to build gems
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y build-essential git libpq-dev libyaml-dev pkg-config && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Install application gems
+COPY Gemfile Gemfile.lock ./
+RUN bundle install && \
+    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
+    # bundle exec bootsnap precompile --gemfile # 開発環境ではコメントアウト
+
+# Copy application code
+COPY . .
+
+# Precompile bootsnap code for faster boot times (開発環境ではコメントアウト)
+# RUN bundle exec bootsnap precompile app/ lib/
+
+# Final stage for app image
+FROM base
+
+# Copy built artifacts: gems, application
+COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
+COPY --from=build /rails /rails
+
+# Run and own only the runtime files as a non-root user for security
+# 開発のしやすさを優先する場合は、以下のセクションをコメントアウトまたは削除し、rootで実行することを検討
+# RUN groupadd --system --gid 1000 rails && \
+#     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
+#     chown -R rails:rails db log storage tmp
+# USER 1000:1000
+
+# Entrypoint prepares the database.
+# 開発環境では docker-compose.yml などでDBを別途起動することが多いため、
+# ここでの entrypoint は不要な場合があるか、内容を見直す必要があるかもしれません。
+# ENTRYPOINT ["/rails/bin/docker-entrypoint"] # 必要に応じてコメントアウトまたは変更
+
+# Start server
+# docker-compose.dev.yml でのポート変更に合わせて修正
+EXPOSE 3001
+CMD ["bin/rails", "server", "-b", "0.0.0.0"]

@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      dockerfile: Dockerfile.dev
+    command: bin/rails server -b 0.0.0.0 -p 3001
+    ports:
+      - "3001:3001"
+    volumes:
+      - .:/rails # ソースコードの同期
+      - bundle_cache:/usr/local/bundle # gemのキャッシュ (任意)
+      - node_modules:/rails/node_modules # node_modules の永続化 (任意、もしあれば)
+      - rails_cache:/rails/tmp/cache # Railsキャッシュ (任意)
+      - bootsnap_cache:/rails/tmp/bootsnap-cache # Bootsnapキャッシュ (任意)
+    environment:
+      - RAILS_ENV=development
+      - POSTGRES_HOST=db
+      # POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB は .env から読み込む想定
+      # RAILS_MASTER_KEY も .env から読み込む想定 (もしdevelopmentでも必要なら)
+    env_file:
+      - .env
+    depends_on:
+      - db
+    # user: "${UID_GID}" # Linuxホストでパーミッション問題を回避する場合 (後述)
+
+  db:
+    ports:
+      - "5432:5432" # 開発時にホストからDBに直接アクセスする場合
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # DBデータの永続化
+    environment:
+      # POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB は .env から読み込む想定
+      - POSTGRES_HOST_AUTH_METHOD=trust # 開発用にパスワードなしで接続を許可 (注意して使用)
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
+  bundle_cache:
+  node_modules:
+  rails_cache:
+  bootsnap_cache:
+# Linuxホストでボリュームマウント時のパーミッション問題を回避したい場合、
+# .envファイルに UID_GID=$(id -u):$(id -g) のような行を追加し、
+# appサービスのuserディレクティブのコメントを解除します。
+# ただし、Dockerfile.dev側でユーザーが適切に作成されているか、
+# またはrootで実行している必要があります。
