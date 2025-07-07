@@ -8,3 +8,7 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 docker volume rm qrman-backend_bundle_cache
 ```
 
+### 依存関係のインストール
+```
+docker compose -f docker-compose.yml -f docker-compose.dev.yml run app bundle install
+```
