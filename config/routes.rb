@@ -1,9 +1,10 @@
 Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
-      get "protected_resource/index"
-      get "sessions/create"
-      get "users/create"
+      post "signin", to: "users#create"
+      post "login", to: "sessions#create"
+
+      resources :protected_resource, only: [ :index ], constraints: lambda { |request| request.format == :json }
     end
   end
   post "auth/:provider/callback", to: "api/v1/users#create"
