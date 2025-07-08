@@ -21,4 +21,7 @@ docker compose exec app bin/rails test
 ```
 docker compose exec app bin/rubocop
 ```
-
+### lintチェックを実行して修正
+```
+docker compose exec app bin/rubocop -a
+```
