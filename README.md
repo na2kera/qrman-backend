@@ -16,3 +16,9 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml run app bundle in
 ```
 docker compose exec app bin/rails test
 ```
+
+### lintチェックを実行
+```
+docker compose exec app bin/rubocop
+```
+
