@@ -12,3 +12,7 @@ docker volume rm qrman-backend_bundle_cache
 ```
 docker compose -f docker-compose.yml -f docker-compose.dev.yml run app bundle install
 ```
+### テストの実行
+```
+docker compose exec app bin/rails test
+```
