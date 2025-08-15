@@ -3,6 +3,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       post "signin", to: "users#create"
       post "login", to: "sessions#create"
+      resources :websites, only: [ :index, :show, :create, :update, :destroy ]
 
       resources :protected_resource, only: [ :index ], constraints: lambda { |request| request.format == :json }
     end
