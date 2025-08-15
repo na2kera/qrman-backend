@@ -1,19 +1,19 @@
 class Api::V1::WebsitesController < ApplicationController
   def index
     websites = Website.all
-    render json: websites.as_json(methods: [:image_url])
+    render json: websites.as_json(methods: [ :image_url ])
   end
 
   def show
     website = Website.find(params[:id])
-    render json: website.as_json(methods: [:image_url])
+    render json: website.as_json(methods: [ :image_url ])
   end
 
   def create
     website = Website.new(website_params.except(:image))
     website.image.attach(website_params[:image]) if website_params[:image].present?
     website.save!
-    render json: website.as_json(methods: [:image_url])
+    render json: website.as_json(methods: [ :image_url ])
   end
 
   def update
@@ -24,7 +24,7 @@ class Api::V1::WebsitesController < ApplicationController
       website.image.purge_later if website.image.attached?
       website.image.attach(website_params[:image])
     end
-    render json: website.as_json(methods: [:image_url])
+    render json: website.as_json(methods: [ :image_url ])
   end
 
   def destroy
